@@ -6,6 +6,7 @@ const webpackDevMiddleware = require("webpack-dev-middleware")
 const webpackHotMiddleware = require("webpack-hot-middleware")
 const config = require("./webpack.config.js")
 const compiler = webpack(config)
+const httpsRedirect = require('express-https-redirect')
 
 const app = express()
 const server = http.Server(app)
@@ -41,15 +42,17 @@ const connect = socket => {
     })
 }
 
-app.get('/', index)
 app.use(express.static(__dirname + '/public'))
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(__dirname + '/dist'))
+  app.use(httpsRedirect)
 } else {
   app.use(webpackDevMiddleware(compiler))
   app.use(webpackHotMiddleware(compiler))
 }
 
+
+app.get('/', index)
 io.on('connection', connect)
 server.listen(process.env.PORT || 1337)
