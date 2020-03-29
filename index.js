@@ -37,4 +37,4 @@ if (process.env.NODE_ENV === "production") {
 }
 
 io.on('connection', connect)
-server.listen(1337)
+server.listen(process.env.PORT || 1337)

@@ -17,8 +17,8 @@ function pageReady() {
     localAudio = document.querySelector(".mixer__track--local audio")
 
     var constraints = {
-        video: true,
-        audio: false,
+        video: false,
+        audio: true,
     };
 
     if(navigator.mediaDevices.getUserMedia) {
@@ -26,7 +26,7 @@ function pageReady() {
             .then(getUserMediaSuccess)
             .then(function(){
 
-                socket = io.connect("http://localhost:1337", {secure: true});
+                socket = io.connect(`http://${location.host}`, {secure: true});
                 socket.on('signal', gotMessageFromServer);
 
                 socket.on('connect', function(){
