@@ -26,7 +26,7 @@ function pageReady() {
             .then(getUserMediaSuccess)
             .then(function(){
 
-                socket = io.connect(`http://${location.host}`, {secure: true});
+                socket = io.connect(location.href, {secure: true});
                 socket.on('signal', gotMessageFromServer);
 
                 socket.on('connect', function(){
