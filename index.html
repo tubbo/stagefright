@@ -4,11 +4,23 @@
     <title>Stagefright</title>
   </head>
   <body>
-    <div class="mixer">
-      <div class="mixer__track mixer__track--local">
-        <audio autoplay muted controls></audio>
-      </div>
-    </div>
+    <article class="mixer">
+      <header class="mixer__transport" style="display:flex">
+        <div class="mixer__bpm">
+          <label for="bpm">BPM:</label>
+          <input type="number" min="1" max="999" id="bpm" name="bpm" />
+        </div>
+        <div class="mixer__buttons">
+          <button id="start" class="mixer__button">Start</button>
+          <button id="stop" class="mixer__button">Stop</button>
+        </div>
+      </header>
+      <main class="mixer__tracks">
+        <div class="mixer__track mixer__track--local">
+          <audio autoplay muted controls></audio>
+        </div>
+      </main>
+    </main>
     <br />
     <script src="main.js"></script>
   </body>

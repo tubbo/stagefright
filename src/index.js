@@ -5,6 +5,9 @@ var socketId;
 var localStream;
 var connections = {};
 var socket;
+var midi;
+var playing;
+var bpm;
 
 var peerConnectionConfig = {
     'iceServers': [
@@ -12,6 +15,53 @@ var peerConnectionConfig = {
         {'urls': 'stun:stun.l.google.com:19302'},
     ]
 };
+
+function changeBPM(event) {
+  bpm = parseInt(event.currentTarget.value)
+
+  socket.emit("bpm", bpm)
+}
+
+function updateBPM(newBPM) {
+  bpm = newBPM
+  document.getElementById("bpm").value = bpm
+}
+
+/**
+ * Send MIDI START signal.
+ */
+function start() {
+  midi.outputs.forEach(output => {
+    output.send([0xFA])
+    output.send([0xF8])
+  })
+
+  setTimeout(sync, tempo())
+  playing = true
+}
+
+/**
+ * Send MIDI CLOCK signal.
+ */
+function sync() {
+  midi.outputs.forEach(output => output.send([0xF8]))
+
+  if (playing) {
+    setTimeout(sync, tempo())
+  }
+}
+
+/**
+ * Send MIDI STOP signal.
+ */
+function stop() {
+  midi.outputs.forEach(output => output.send([0xFC]))
+  playing = false
+}
+
+function tempo() {
+  return 60 / bpm / 24
+}
 
 function pageReady() {
     localAudio = document.querySelector(".mixer__track--local audio")
@@ -39,8 +89,12 @@ function pageReady() {
                         audio.parentElement.parentElement.removeChild(parentDiv);
                     });
 
+                    socket.on('bpm', updateBPM)
+                    socket.on('start', start)
+                    socket.on('stop', stop)
 
-                    socket.on('join', function(id, count, clients){
+                    socket.on('join', function(id, count, clients, cp){
+                        playing = cp
                         clients.forEach(function(socketListId) {
                             if(!connections[socketListId]){
                                 connections[socketListId] = new RTCPeerConnection(peerConnectionConfig);
@@ -63,7 +117,7 @@ function pageReady() {
 
                         //Create an offer to connect with your local description
 
-                        if(count >= 2){
+                        if(count >= 2) {
                             connections[id].createOffer().then(function(description){
                                 connections[id].setLocalDescription(description).then(function() {
                                     // console.log(connections);
@@ -71,13 +125,25 @@ function pageReady() {
                                 })
                             });
                         }
+
+                      console.log('playing', playing)
+
+                        if (playing) {
+                          start()
+                        }
                     });
                 })
 
+                document.getElementById("bpm").addEventListener("change", changeBPM)
+              document.getElementById("start").addEventListener("click", () => socket.emit("start"))
+              document.getElementById("stop").addEventListener("click", () => socket.emit("stop"))
             });
     } else {
         alert('Your browser does not support getUserMedia API');
     }
+
+    const sysex = true
+    navigator.requestMIDIAccess({ sysex }).then(m => midi = m)
 }
 
 function getUserMediaSuccess(stream) {
