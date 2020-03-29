@@ -60,7 +60,7 @@ function stop() {
 }
 
 function tempo() {
-  return 60 / bpm / 24
+  return bpm * 4
 }
 
 function pageReady() {
