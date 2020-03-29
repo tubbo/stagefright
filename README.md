@@ -28,6 +28,11 @@ View the app at <http://localhost:1337>
 Go to https://tubbo-stagefright.herokuapp.com and allow audio/MIDI
 permissions, then start jamming! It's all one big room for now.
 
+To connect your DAW, create an IAC Driver and set your DAW to receive
+MIDI Clock/Sync from that device.
+
+https://stackoverflow.com/questions/43544357/how-to-connect-web-midi-api-to-native-application-like-ableton-live
+
 ## deployment
 
 This app is deployed to [Heroku][] using a [Docker][] image.
