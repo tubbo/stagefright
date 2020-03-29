@@ -120,13 +120,10 @@ function pageReady() {
                         if(count >= 2) {
                             connections[id].createOffer().then(function(description){
                                 connections[id].setLocalDescription(description).then(function() {
-                                    // console.log(connections);
                                     socket.emit('signal', id, JSON.stringify({'sdp': connections[id].localDescription}));
                                 })
                             });
                         }
-
-                      console.log('playing', playing)
 
                         if (playing) {
                           start()
