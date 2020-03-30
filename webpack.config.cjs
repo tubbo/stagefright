@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   mode: "development",
   module: {
     rules: [

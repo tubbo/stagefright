@@ -4,7 +4,7 @@ import socketio from "socket.io"
 import webpack from "webpack"
 import webpackDevMiddleware from "webpack-dev-middleware"
 import webpackHotMiddleware from "webpack-hot-middleware"
-import config from "./webpack.config.js"
+import config from "./webpack.config.cjs"
 import httpsRedirect from "express-https-redirect"
 import fs from "fs"
 
