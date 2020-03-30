@@ -29,7 +29,7 @@ const connect = socket => {
     socket.to(id).emit("signal", socket.id, message)
   })
   socket.on("message", data => socket.emit("broadcast", socket.id, data))
-  socket.on("part", () => socket.emit("part", socket.id))
+  socket.on("disconnect", () => socket.emit("part", socket.id))
   socket.on("bpm", newBPM => {
     bpm = newBPM
     socket.emit("bpm", bpm)
