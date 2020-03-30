@@ -1,20 +1,19 @@
 import io from "socket.io-client"
 
-var localAudio;
-var socketId;
-var localStream;
-var connections = {};
-var socket;
-var midi;
-var playing;
-var bpm;
+let socketId
+let localStream
+let connections = {}
+let socket
+let midi
+let playing
+let bpm
 
 var peerConnectionConfig = {
-    'iceServers': [
-        {'urls': 'stun:stun.services.mozilla.com'},
-        {'urls': 'stun:stun.l.google.com:19302'},
-    ]
-};
+  'iceServers': [
+    {'urls': 'stun:stun.services.mozilla.com'},
+    {'urls': 'stun:stun.l.google.com:19302'},
+  ]
+}
 
 function changeBPM(event) {
   bpm = parseInt(event.currentTarget.value)
@@ -63,130 +62,153 @@ function tempo() {
   return (bpm * 4) / 24
 }
 
-function pageReady() {
-    localAudio = document.querySelector(".mixer__track--local audio")
+function part(id) {
+  var audio = document.querySelector('[data-socket="'+ id +'"]')
+  var parentDiv = audio.parentElement
 
-    var constraints = {
-        video: false,
-        audio: true,
-    };
-
-    if(navigator.mediaDevices.getUserMedia) {
-        navigator.mediaDevices.getUserMedia(constraints)
-            .then(getUserMediaSuccess)
-            .then(function(){
-
-                socket = io.connect(location.href, {secure: true});
-                socket.on('signal', gotMessageFromServer);
-
-                socket.on('connect', function(){
-
-                    socketId = socket.id;
-
-                    socket.on('part', function(id){
-                        var audio = document.querySelector('[data-socket="'+ id +'"]');
-                        var parentDiv = audio.parentElement;
-                        audio.parentElement.parentElement.removeChild(parentDiv);
-                    });
-
-                    socket.on('bpm', updateBPM)
-                    socket.on('start', start)
-                    socket.on('stop', stop)
-
-                    socket.on('join', function(id, count, clients, cp){
-                        playing = cp
-                        clients.forEach(function(socketListId) {
-                            if(!connections[socketListId]){
-                                connections[socketListId] = new RTCPeerConnection(peerConnectionConfig);
-                                //Wait for their ice candidate
-                                connections[socketListId].onicecandidate = function(){
-                                    if(event.candidate != null) {
-                                        socket.emit('signal', socketListId, JSON.stringify({'ice': event.candidate}));
-                                    }
-                                }
-
-                                //Wait for their audio stream
-                                connections[socketListId].onaddstream = function(){
-                                    gotRemoteStream(event, socketListId)
-                                }
-
-                                //Add the local audio stream
-                                connections[socketListId].addStream(localStream);
-                            }
-                        });
-
-                        //Create an offer to connect with your local description
-
-                        if(count >= 2) {
-                            connections[id].createOffer().then(function(description){
-                                connections[id].setLocalDescription(description).then(function() {
-                                    socket.emit('signal', id, JSON.stringify({'sdp': connections[id].localDescription}));
-                                })
-                            });
-                        }
-
-                        if (playing) {
-                          start()
-                        }
-                    });
-                })
-
-                document.getElementById("bpm").addEventListener("change", changeBPM)
-              document.getElementById("start").addEventListener("click", () => socket.emit("start"))
-              document.getElementById("stop").addEventListener("click", () => socket.emit("stop"))
-            });
-    } else {
-        alert('Your browser does not support getUserMedia API');
-    }
-
-    const sysex = true
-    navigator.requestMIDIAccess({ sysex }).then(m => midi = m)
+  audio.parentElement.parentElement.removeChild(parentDiv)
 }
 
-function getUserMediaSuccess(stream) {
-    localStream = stream;
-    localAudio.srcObject = localStream;
+async function join(id, count, clients, currentlyPlaying) {
+  playing = currentlyPlaying
+
+  clients.forEach(function(socketListId) {
+    if (!connections[socketListId]){
+      connections[socketListId] = new RTCPeerConnection(peerConnectionConfig)
+      //Wait for their ice candidate
+      connections[socketListId].onicecandidate = function(){
+        if (event.candidate !== null) {
+          socket.emit('signal', socketListId, JSON.stringify({'ice': event.candidate}))
+        }
+      }
+
+      //Wait for their audio stream
+      connections[socketListId].onaddstream = function(){
+        gotRemoteStream(event, socketListId)
+      }
+
+      //Add the local audio stream
+      connections[socketListId].addStream(localStream)
+    }
+  })
+
+  // Create an offer to connect with your local description
+  if (count >= 2) {
+    const description = await connections[id].createOffer()
+
+    await connections[id].setLocalDescription(description)
+
+    const message = JSON.stringify({'sdp': connections[id].localDescription})
+
+    socket.emit('signal', id, message)
+  }
+
+  // Send the MIDI Start signal locally if already playing
+  if (playing) {
+    start()
+  }
+}
+
+/**
+ * Fired when a socket channel is connected to
+ */
+function connect() {
+  socketId = socket.id
+
+  socket.on('part', part)
+  socket.on('bpm', updateBPM)
+  socket.on('start', start)
+  socket.on('stop', stop)
+  socket.on('join', join)
+}
+
+/**
+ * Emit the socket event indicated by the ID of the button.
+ */
+function buttonClick(event) {
+  socket.emit(event.currentTarget.id)
+}
+
+async function pageReady() {
+  const localAudio = document.querySelector(".mixer__track--local audio")
+  const input = document.querySelector("input[type='number']")
+  const buttons = document.getElementsByTagName("button")
+
+  if (navigator.mediaDevices.getUserMedia) {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({
+        video: false,
+        audio: true
+      })
+    } catch (e) {
+      alert(e)
+    }
+
+    localAudio.srcObject = localStream
+  } else {
+    alert('Your browser does not support getUserMedia API')
+  }
+
+  if (navigator.requestMIDIAccess) {
+    midi = await navigator.requestMIDIAccess({ sysex: true })
+  } else {
+    alert('Your browser does not support the Web MIDI API')
+  }
+
+  socket = io.connect(location.href, { secure: true })
+
+  socket.on('signal', signal)
+  socket.on('connect', connect)
+  input.addEventListener("change", changeBPM)
+  buttons.forEach(button => button.addEventListener("click", buttonClick))
 }
 
 function gotRemoteStream(event, id) {
-    const audio = document.createElement('audio')
-    const track = document.createElement('div')
-    const mixer = document.querySelector('.mixer')
+  const audio = document.createElement('audio')
+  const track = document.createElement('div')
+  const mixer = document.querySelector('.mixer')
 
-    audio.setAttribute('data-socket', id);
-    audio.srcObject   = event.stream;
-    audio.autoplay    = true;
-    audio.controls    = true;
+  audio.setAttribute('data-socket', id)
+  audio.srcObject   = event.stream
+  audio.autoplay    = true
+  audio.controls    = true
 
-    track.classList.add("mixer__track");
-    track.innerText = id;
-    track.appendChild(audio);
-    mixer.appendChild(track);
+  track.classList.add("mixer__track")
+  track.innerText = id
+  track.appendChild(audio)
+  mixer.appendChild(track)
 }
 
-function gotMessageFromServer(fromId, message) {
+async function signal(fromId, message) {
+  // Parse the incoming signal
+  var { sdp, ice } = JSON.parse(message)
 
-    //Parse the incoming signal
-    var signal = JSON.parse(message)
+  // Make sure it's not coming from yourself
+  if (fromId !== socketId) {
+    if (sdp) {
+      const remoteDesc = new RTCSessionDescription(sdp)
 
-    //Make sure it's not coming from yourself
-    if (fromId != socketId) {
-        if (signal.sdp){
-            connections[fromId].setRemoteDescription(new RTCSessionDescription(signal.sdp)).then(function() {
-                if(signal.sdp.type == 'offer') {
-                    connections[fromId].createAnswer().then(function(description){
-                        connections[fromId].setLocalDescription(description).then(function() {
-                            socket.emit('signal', fromId, JSON.stringify({'sdp': connections[fromId].localDescription}));
-                        })
-                    })
-                }
-            })
-        }
+      await connections[fromId].setRemoteDescription(remoteDesc)
 
-        if (signal.ice) {
-            connections[fromId].addIceCandidate(new RTCIceCandidate(signal.ice))
-        }
+      if (signal.sdp.type === 'offer') {
+        const description = await connections[fromId].createAnswer()
+
+        await connections[fromId].setLocalDescription(description)
+
+        const message = JSON.stringify({
+          'sdp': connections[fromId].localDescription
+        })
+
+        socket.emit('signal', fromId, message)
+      }
     }
+
+    if (ice) {
+      const candidate = new RTCIceCandidate(ice)
+
+      connections[fromId].addIceCandidate(candidate)
+    }
+  }
 }
 
-document.addEventListener("DOMContentLoaded", pageReady);
+document.addEventListener("DOMContentLoaded", pageReady)
