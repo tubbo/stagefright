@@ -44,7 +44,7 @@ async function join(id, count, clients, currentlyPlaying, nickname) {
   })
 
   // Create an offer to connect with your local description
-  if (count >= 2) {
+  if (count >= 2 && connections[id]) {
     await connections[id].createOffer()
   }
 

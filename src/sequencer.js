@@ -54,7 +54,6 @@ export default class Sequencer {
     this.startButton.removeAttribute("disabled")
     this.beat = 0
     this.tick = 0
-    this.beatDisplay.innerText = ""
   }
 
   /**
