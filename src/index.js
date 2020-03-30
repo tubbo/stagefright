@@ -1,4 +1,5 @@
 import io from "socket.io-client"
+import "./index.css"
 
 let socketId
 let localStream
