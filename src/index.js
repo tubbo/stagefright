@@ -21,15 +21,18 @@ function updateBPM(newBPM) {
 }
 
 /**
- * Send MIDI START signal.
+ * Remove element when a client disconnects.
  */
 function part(id) {
   var audio = document.querySelector('[data-socket="'+ id +'"]')
   var parentDiv = audio.parentElement
 
-  audio.parentElement.parentElement.removeChild(parentDiv)
+  parentDiv.remove()
 }
 
+/**
+ * Ensure all peers are connected when each user connects.
+ */
 async function join(id, count, clients, currentlyPlaying) {
   sequencer.playing = currentlyPlaying
 
@@ -52,7 +55,7 @@ async function join(id, count, clients, currentlyPlaying) {
 }
 
 /**
- * Fired when a socket channel is connected to
+ * Bind other socket events when connected to the server.
  */
 function connect() {
   socketId = socket.id
@@ -96,6 +99,9 @@ async function pageReady() {
     const midi = await navigator.requestMIDIAccess({ sysex: true })
     sequencer = new Sequencer(midi)
   } else {
+    const inputs = document.querySelectorAll("button, input")
+
+    inputs.forEach(input => input.setAttribute("disabled", "disabled"))
     alert('Your browser does not support the Web MIDI API. MIDI is disabled.')
   }
 
