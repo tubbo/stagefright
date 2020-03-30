@@ -10,13 +10,13 @@ let socket
 let sequencer
 
 function changeBPM(event) {
-  this.sequencer.bpm = parseInt(event.currentTarget.value)
+  sequencer.bpm = parseInt(event.currentTarget.value)
 
-  socket.emit("bpm", this.sequencer.bpm)
+  socket.emit("bpm", sequencer.bpm)
 }
 
 function updateBPM(newBPM) {
-  this.sequencer.bpm = newBPM
+  sequencer.bpm = newBPM
   document.getElementById("bpm").value = newBPM
 }
 
@@ -77,7 +77,7 @@ function buttonClick(event) {
 async function pageReady() {
   const localAudio = document.querySelector(".mixer__track--local audio")
   const input = document.querySelector("input[type='number']")
-  const buttons = document.getElementsByTagName("button")
+  const buttons = document.querySelectorAll("button")
   const secure = (location.protocol === "https")
 
   if (navigator.mediaDevices.getUserMedia) {

@@ -6,6 +6,11 @@ export default class Sequencer {
     this.midi = midi
     this.bpm = 0
     this.playing = false
+    this.startButton = document.getElementById("start")
+    this.stopButton = document.getElementById("stop")
+    this.beatDisplay = document.getElementById("beat")
+    this.tick = 0
+    this.quarter = 0
   }
 
   /**
@@ -15,18 +20,27 @@ export default class Sequencer {
     this.send([0xFA])
     this.send([0xF8])
 
-    setTimeout(this.sync, this.tempo)
+    setTimeout(this.sync.bind(this), this.tempo)
     this.playing = true
+    this.startButton.setAttribute("disabled", "disabled")
+    this.stopButton.removeAttribute("disabled")
   }
 
   /**
    * Send MIDI CLOCK signal.
    */
   sync() {
+    this.tick++
+
+    if (this.tick % 24 === 0) {
+      this.quarter++
+      this.beatDisplay.innerText = this.quarter.toString()
+    }
+
     this.send([0xF8])
 
     if (this.playing) {
-      setTimeout(this.sync, this.tempo)
+      setTimeout(this.sync.bind(this), this.tempo)
     }
   }
 
@@ -36,6 +50,11 @@ export default class Sequencer {
   stop() {
     this.send([0xFC])
     this.playing = false
+    this.stopButton.setAttribute("disabled", "disabled")
+    this.startButton.removeAttribute("disabled")
+    this.beat = 0
+    this.tick = 0
+    this.beatDisplay.innerText = ""
   }
 
   /**
@@ -49,6 +68,6 @@ export default class Sequencer {
    * Interval to send sync signals to MIDI devices.
    */
   get tempo() {
-    return (this.bpm * 4) / 24
+    return 1000 * (60 / this.bpm / 24)
   }
 }

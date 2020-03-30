@@ -35,11 +35,11 @@ const connect = socket => {
     socket.emit("bpm", bpm)
   })
   socket.on("start", () => {
-    socket.emit("start")
+    io.emit("start")
     playing = true
   })
   socket.on("stop", () => {
-    socket.emit("stop")
+    io.emit("stop")
     playing = false
   })
 }
