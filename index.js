@@ -18,11 +18,17 @@ const index = (req, res) => {
 }
 let bpm = 120
 let playing = false
+let users = {}
 const connect = socket => {
   const count = io.engine.clientsCount
-  const clients = Object.keys(io.sockets.clients().sockets)
+  const socketIDs = Object.keys(io.sockets.clients().sockets)
+  const clients = socketIDs.map(client => {
+    const nick = users[client] || client
 
-  io.emit("join", socket.id, count, clients, playing)
+    return { client, nick }
+  })
+
+  io.emit("join", socket.id, count, clients, playing, users[socket.id])
   io.emit("bpm", bpm)
 
   socket.on("signal", (id, message) => {
@@ -41,6 +47,14 @@ const connect = socket => {
   socket.on("stop", () => {
     io.emit("stop")
     playing = false
+  })
+  socket.on("nick", (id, nickname) => {
+    users[id] = nickname
+  })
+  socket.on("chat", (id, message) => {
+    const nick = users[id] || id
+
+    io.emit("chat", nick, message)
   })
 }
 

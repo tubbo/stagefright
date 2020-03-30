@@ -1,3 +1,10 @@
 .mixer__transport {
   display: flex;
 }
+.mixer__chat-input {
+  display: flex;
+}
+.mixer__chat-messages {
+  overflow-x: scroll;
+  height: 100px;
+}

@@ -23,7 +23,18 @@
           <audio autoplay muted controls></audio>
         </div>
       </main>
-    </main>
+      <footer class="mixer__chat">
+        <div class="mixer__chat-messages"></div>
+        <div class="mixer__chat-input">
+          <div class="mixer__chat-nickname">
+            <input type="text" name="nick" id="nick" placeholder="nickname" />
+          </div>
+          <form id="send-message" class="mixer__chat-input" method="POST">
+            <input type="text" name="message" placeholder="Your message" />
+            <button type="submit">Send</button>
+          </form>
+        </div>
+    </article>
     <br />
     <script src="main.js"></script>
   </body>

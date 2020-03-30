@@ -33,13 +33,13 @@ function part(id) {
 /**
  * Ensure all peers are connected when each user connects.
  */
-async function join(id, count, clients, currentlyPlaying) {
+async function join(id, count, clients, currentlyPlaying, nickname) {
   sequencer.playing = currentlyPlaying
 
   // Connect to all clients
-  clients.forEach(function(client) {
+  clients.forEach(function({ client, nick }) {
     if (!connections[client]) {
-      connections[client] = new Connection(client, socket, localStream)
+      connections[client] = new Connection(client, socket, localStream, nick)
     }
   })
 
@@ -52,19 +52,26 @@ async function join(id, count, clients, currentlyPlaying) {
   if (sequencer.playing) {
     sequencer.start()
   }
+
+  if (nickname) {
+    document.getElementById("nick").value = nickname
+  }
 }
 
 /**
  * Bind other socket events when connected to the server.
  */
 function connect() {
+  const start = sequencer.start.bind(sequencer)
+  const stop = sequencer.stop.bind(sequencer)
   socketId = socket.id
 
   socket.on('join', join)
   socket.on('part', part)
   socket.on('bpm', updateBPM)
-  socket.on('start', sequencer.start.bind(sequencer))
-  socket.on('stop', sequencer.stop.bind(sequencer))
+  socket.on('start', start)
+  socket.on('stop', stop)
+  socket.on('chat', renderChat)
 }
 
 /**
@@ -79,6 +86,8 @@ async function pageReady() {
   const input = document.querySelector("input[type='number']")
   const buttons = document.querySelectorAll("button")
   const secure = (location.protocol === "https")
+  const form = document.getElementById("send-message")
+  const nick = document.getElementById("nick")
 
   if (navigator.mediaDevices.getUserMedia) {
     try {
@@ -111,6 +120,35 @@ async function pageReady() {
   socket.on('connect', connect)
   input.addEventListener("change", changeBPM)
   buttons.forEach(button => button.addEventListener("click", buttonClick))
+  form.addEventListener("submit", sendChatMessage)
+  nick.addEventListener("change", changeNickname)
+}
+
+function changeNickname(event) {
+  event.preventDefault()
+
+  const nick = event.currentTarget.value
+
+  socket.emit("nick", socketId, nick)
+}
+
+function sendChatMessage(event) {
+  event.preventDefault()
+
+  const message = event.currentTarget.querySelector("input").value
+
+  socket.emit("chat", socketId, message)
+}
+
+function renderChat(nick, message) {
+  const container = document.querySelector(".mixer__chat-messages")
+  const chat = document.createElement("div")
+
+  chat.innerText = `<${nick}> ${message}`
+  container.scrollTop = container.scrollHeight
+
+  chat.classList.add("chat__message")
+  container.appendChild(chat)
 }
 
 async function signal(fromId, message) {

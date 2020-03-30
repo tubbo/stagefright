@@ -9,9 +9,10 @@ const PEER_CONNECTION_CONFIG = {
  * Audio Stream from a Client Connection.
  */
 export default class Connection {
-  constructor(id, socket, localStream) {
+  constructor(id, socket, localStream, nick) {
     this.id = id
     this.socket = socket
+    this.nick = nick
     this.peer = new RTCPeerConnection(PEER_CONNECTION_CONFIG)
     this.peer.onicecandidate = this.emitSignal.bind(this)
     this.peer.onaddstream = this.addTrack.bind(this)
@@ -39,7 +40,7 @@ export default class Connection {
     audio.controls    = true
 
     track.classList.add("mixer__track")
-    track.innerText = this.id
+    track.innerText = this.nick
     track.appendChild(audio)
     mixer.appendChild(track)
   }
