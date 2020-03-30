@@ -46,7 +46,7 @@ app.use(express.static(__dirname + '/public'))
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(__dirname + '/dist'))
-  // app.use(httpsRedirect)
+  app.use('/', httpsRedirect())
 } else {
   app.use(webpackDevMiddleware(compiler))
   app.use(webpackHotMiddleware(compiler))
