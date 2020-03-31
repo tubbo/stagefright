@@ -33,8 +33,7 @@ function part(id) {
 /**
  * Ensure all peers are connected when each user connects.
  */
-async function join(id, count, clients, currentlyPlaying, nickname, bpm) {
-  sequencer.playing = currentlyPlaying
+async function join(id, count, clients, playing, nickname, bpm) {
   updateBPM(bpm)
 
   // Connect to all clients
@@ -50,7 +49,7 @@ async function join(id, count, clients, currentlyPlaying, nickname, bpm) {
   }
 
   // Send the MIDI Start signal locally if already playing
-  if (sequencer.playing) {
+  if (playing) {
     sequencer.start()
   }
 
@@ -109,7 +108,7 @@ async function pageReady() {
   if (navigator.requestMIDIAccess) {
     const midi = await navigator.requestMIDIAccess({ sysex: true })
     sequencer = new Sequencer(midi)
-    sequencer.midi.outputs.values().forEach(createDeviceOption(device))
+    sequencer.midi.outputs.forEach(createDeviceOption(device))
   } else {
     const inputs = document.querySelectorAll("button, input")
 

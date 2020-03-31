@@ -1,3 +1,5 @@
+import NotFoundError from "./errors/not-found"
+
 /**
  * Connect to local MIDI devices and send MTC signals at a given tempo.
  */
@@ -5,12 +7,12 @@ export default class Sequencer {
   constructor(midi) {
     this.midi = midi
     this.bpm = 0
-    this.playing = false
     this.startButton = document.getElementById("start")
     this.stopButton = document.getElementById("stop")
     this.beatDisplay = document.getElementById("beat")
     this.tick = 0
     this.quarter = 0
+    this.timeout = null
   }
 
   /**
@@ -20,8 +22,8 @@ export default class Sequencer {
     this.send([0xFA])
     this.send([0xF8])
 
-    setTimeout(this.sync.bind(this), this.tempo)
-    this.playing = true
+    this.expected = Date.now() + this.tempo
+    this.timeout = setTimeout(this.sync.bind(this), this.tempo)
     this.startButton.setAttribute("disabled", "disabled")
     this.stopButton.removeAttribute("disabled")
   }
@@ -40,7 +42,13 @@ export default class Sequencer {
     this.send([0xF8])
 
     if (this.playing) {
-      setTimeout(this.sync.bind(this), this.tempo)
+      const dt = Date.now() - this.expected
+
+      if (dt <= this.tempo) {
+        this.expected += this.tempo
+        const nextTime = Math.max(0, this.tempo - dt)
+        this.timeout = setTimeout(this.sync.bind(this), nextTime)
+      }
     }
   }
 
@@ -49,18 +57,28 @@ export default class Sequencer {
    */
   stop() {
     this.send([0xFC])
-    this.playing = false
     this.stopButton.setAttribute("disabled", "disabled")
     this.startButton.removeAttribute("disabled")
     this.beat = 0
     this.tick = 0
+
+    clearTimeout(this.timeout)
   }
 
   /**
    * Send to all MIDI outputs
    */
   send(payload) {
-    this.output.send(payload)
+    if (this.output) {
+      this.output.send(payload)
+    }
+  }
+
+  /**
+   * The sequencer is running if a `timeout` is defined.
+   */
+  get playing() {
+    return this.timeout !== null
   }
 
   /**
@@ -70,6 +88,9 @@ export default class Sequencer {
     return 1000 * (60 / this.bpm / 24)
   }
 
+  /**
+   * Current device ID of the selected output.
+   */
   get device() {
     if (!this.output) {
       return null
@@ -78,7 +99,18 @@ export default class Sequencer {
     return this.output.id
   }
 
+  /**
+   * Select the output by setting its device ID. This will find an
+   * output corresponding to the ID. If not found, an error will be
+   * thrown`
+   */
   set device(id) {
-    this.output = this.midi.outputs.find(output => output.id === id)
+    const selected = this.midi.outputs.find(output => output.id === id)
+
+    if (!selected) {
+      throw new NotFoundError(id)
+    }
+
+    this.output = selected
   }
 }
