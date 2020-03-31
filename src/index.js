@@ -108,7 +108,14 @@ async function pageReady() {
   if (navigator.requestMIDIAccess) {
     const midi = await navigator.requestMIDIAccess({ sysex: true })
     sequencer = new Sequencer(midi)
-    sequencer.midi.outputs.forEach(createDeviceOption(device))
+    sequencer.midi.outputs.forEach(output => {
+      const option = document.createElement("option")
+
+      option.value = output.id
+      option.innerText = `Output ${output.id}`
+
+      device.appendChild(option)
+    })
   } else {
     const inputs = document.querySelectorAll("button, input")
 
@@ -124,17 +131,6 @@ async function pageReady() {
   buttons.forEach(button => button.addEventListener("click", buttonClick))
   form.addEventListener("submit", sendChatMessage)
   nick.addEventListener("change", changeNickname)
-}
-
-function createDeviceOption(select) {
-  return ({ id, port: { name } }) => {
-    const option = document.createElement("option")
-
-    option.value = id
-    option.innerText = name
-
-    select.appendChild(option)
-  }
 }
 
 function changeNickname(event) {
