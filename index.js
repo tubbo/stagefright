@@ -28,8 +28,7 @@ const connect = socket => {
     return { client, nick }
   })
 
-  io.emit("join", socket.id, count, clients, playing, users[socket.id])
-  io.emit("bpm", bpm)
+  io.emit("join", socket.id, count, clients, playing, users[socket.id], bpm)
 
   socket.on("signal", (id, message) => {
     socket.to(id).emit("signal", socket.id, message)

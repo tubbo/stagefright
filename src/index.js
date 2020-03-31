@@ -33,8 +33,9 @@ function part(id) {
 /**
  * Ensure all peers are connected when each user connects.
  */
-async function join(id, count, clients, currentlyPlaying, nickname) {
+async function join(id, count, clients, currentlyPlaying, nickname, bpm) {
   sequencer.playing = currentlyPlaying
+  updateBPM(bpm)
 
   // Connect to all clients
   clients.forEach(function({ client, nick }) {
