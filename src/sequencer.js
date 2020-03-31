@@ -6,7 +6,7 @@ import NotFoundError from "./errors/not-found"
 export default class Sequencer {
   constructor(midi) {
     this.midi = midi
-    this.bpm = 0
+    this.beatsPerMinute = 0
     this.startButton = document.getElementById("start")
     this.stopButton = document.getElementById("stop")
     this.beatDisplay = document.getElementById("beat")
@@ -118,5 +118,14 @@ export default class Sequencer {
     }
 
     this.output = selected
+  }
+
+  set bpm(value) {
+    this.beatsPerMinute = value
+    this.expected = Date.now() + this.tempo
+  }
+
+  get bpm() {
+    return this.beatsPerMinute
   }
 }
