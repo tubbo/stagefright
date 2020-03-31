@@ -105,7 +105,13 @@ export default class Sequencer {
    * thrown`
    */
   set device(id) {
-    const selected = this.midi.outputs.find(output => output.id === id)
+    let selected
+
+    this.midi.outputs.forEach(output => {
+      if (id === output.id) {
+        selected = output
+      }
+    })
 
     if (!selected) {
       throw new NotFoundError(id)
