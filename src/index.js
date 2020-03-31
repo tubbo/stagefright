@@ -131,6 +131,15 @@ async function pageReady() {
   buttons.forEach(button => button.addEventListener("click", buttonClick))
   form.addEventListener("submit", sendChatMessage)
   nick.addEventListener("change", changeNickname)
+  device.addEventListener("change", changeDevice)
+}
+
+function changeDevice(event) {
+  const id = event.currentTarget.value
+
+  if (id) {
+    sequencer.device = id
+  }
 }
 
 function changeNickname(event) {
