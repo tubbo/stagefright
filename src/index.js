@@ -112,9 +112,8 @@ async function pageReady() {
       const option = document.createElement("option")
 
       option.value = output.id
-      option.innerText = `Output ${output.id}`
+      option.innerText = output.name
 
-      console.log(output)
       device.appendChild(option)
     })
   } else {
