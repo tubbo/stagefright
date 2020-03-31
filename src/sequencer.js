@@ -60,7 +60,7 @@ export default class Sequencer {
    * Send to all MIDI outputs
    */
   send(payload) {
-    this.midi.outputs.forEach(output => output.send(payload))
+    this.output.send(payload)
   }
 
   /**
@@ -68,5 +68,17 @@ export default class Sequencer {
    */
   get tempo() {
     return 1000 * (60 / this.bpm / 24)
+  }
+
+  get device() {
+    if (!this.output) {
+      return null
+    }
+
+    return this.output.id
+  }
+
+  set device(id) {
+    this.output = this.midi.outputs.find(output => output.id === id)
   }
 }

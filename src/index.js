@@ -89,6 +89,7 @@ async function pageReady() {
   const secure = (location.protocol === "https")
   const form = document.getElementById("send-message")
   const nick = document.getElementById("nick")
+  const device = document.getElementById("device")
 
   if (navigator.mediaDevices.getUserMedia) {
     try {
@@ -108,6 +109,7 @@ async function pageReady() {
   if (navigator.requestMIDIAccess) {
     const midi = await navigator.requestMIDIAccess({ sysex: true })
     sequencer = new Sequencer(midi)
+    sequencer.midi.outputs.values().forEach(createDeviceOption(device))
   } else {
     const inputs = document.querySelectorAll("button, input")
 
@@ -123,6 +125,17 @@ async function pageReady() {
   buttons.forEach(button => button.addEventListener("click", buttonClick))
   form.addEventListener("submit", sendChatMessage)
   nick.addEventListener("change", changeNickname)
+}
+
+function createDeviceOption(select) {
+  return ({ id, port: { name } }) => {
+    const option = document.createElement("option")
+
+    option.value = id
+    option.innerText = name
+
+    select.appendChild(option)
+  }
 }
 
 function changeNickname(event) {
