@@ -114,6 +114,7 @@ async function pageReady() {
       option.value = output.id
       option.innerText = `Output ${output.id}`
 
+      console.log(output)
       device.appendChild(option)
     })
   } else {
