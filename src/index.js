@@ -1,6 +1,7 @@
 import io from "socket.io-client"
 import Connection from "./connection"
 import Sequencer from "./sequencer"
+import cookies from "./cookies"
 import "./index.css"
 
 let socketId
@@ -132,6 +133,10 @@ async function pageReady() {
   form.addEventListener("submit", sendChatMessage)
   nick.addEventListener("change", changeNickname)
   device.addEventListener("change", changeDevice)
+
+  if ('nick' in cookies) {
+    nick.value = cookies.nick
+  }
 }
 
 function changeDevice(event) {
@@ -148,6 +153,7 @@ function changeNickname(event) {
   const nick = event.currentTarget.value
 
   socket.emit("nick", socketId, nick)
+  cookies.nick = nick
 }
 
 function sendChatMessage(event) {
